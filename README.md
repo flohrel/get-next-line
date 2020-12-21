@@ -1,2 +1,2 @@
 # get-next-line
-C function to read a file descriptor
+C function to read from a file descriptor
