@@ -5,104 +5,135 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/12/14 22:49:06 by flohrel           #+#    #+#             */
-/*   Updated: 2020/12/17 03:33:33 by flohrel          ###   ########.fr       */
+/*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
+/*   Updated: 2021/01/07 15:43:44 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-t_queue	*qset(t_queue *q)
+int			push(t_queue *file_q, char *buf, size_t size)
 {
-	if (!q)
-		q = malloc(sizeof(*q));
-	if (!q)
-		return (q);
-	q->front = NULL;
-	q->back = NULL;
-	q->size = 0;
-	return (q);
-}
+	t_buf	*new_buf;
 
-int		enqueue(t_queue *q, char *buf, size_t len)
-{
-	char	*new_buf;
-
-	new_buf = malloc(sizeof(*new_buf) * len);
-	if (!new_buf)
+	if (!(new_buf = malloc(sizeof(t_buf))) ||
+		!(new_buf->data = malloc(sizeof(char) * size)))
 		return (-1);
-	new_buf = ft_memcpy(new_buf, buf, len);
-	if (!qpush(q, new_buf, len))
-		return (-1);
+	ft_memcpy(new_buf->data, buf, size);
+	new_buf->size = size;
+	new_buf->next = NULL;
+	file_q->len += size;
+	if (!(file_q->first))
+		file_q->first = new_buf;
+	if (file_q->last)
+		file_q->last->next = new_buf;
+	file_q->last = new_buf;
 	return (0);
 }
 
-int		set_newline(t_queue *q, char **line)
+void		pop(t_queue *file_q)
 {
-	int		i;
-	t_list	*lst;
+	t_queue	*cur_file;
+	t_buf	*cur_buf;
+
+	if (file_q->fd != -1)
+	{
+		cur_buf = file_q->first;
+		file_q->first = cur_buf->next;
+		file_q->len -= cur_buf->size;
+		free(cur_buf->data);
+		free(cur_buf);
+	}
+	else
+	{
+		while (file_q->next->fd != -1)
+			file_q = file_q->next;
+		cur_file = file_q->next;
+		file_q->next = cur_file->next;
+		free(cur_file);
+	}
+}
+
+int			set_line(t_queue *file_q, char **line)
+{
+	char	*lptr;
+	t_buf	*cur_buf;
 
 	if (*line)
 		free(*line);
-	*line = malloc(sizeof(char) * (q->size + 1));
-	if (!(*line))
+	*line = malloc(sizeof(char) * file_q->len + 1);
 		return (-1);
-	i = 0;
-	while (i != q->size)
+	lptr = *line;
+	while ((cur_buf = file_q->first))
 	{
-		lst = q->front;
-		ft_memcpy(&(*line)[i], lst->buf, lst->len);
-		i += lst->len;
-		qpop(q);
+		ft_memcpy(lptr, cur_buf->data, cur_buf->size);
+		lptr += cur_buf->size;
+		pop(file_q);
 	}
-	(*line)[q->size] = '\0';
-	q->size = 0;
-	q->front = NULL;
-	q->back = NULL;
+	*lptr = '\0';
+	file_q->first = NULL;
+	file_q->last = NULL;
+	file_q->len = 0;
 	return (0);
 }
 
-int		get_newline(t_queue *q, char *buf, size_t len, char **line)
+int			get_line(t_queue *file_q, char *buf, size_t size, char **line)
 {
-	char	*next_line;
-	size_t	n;
+	char	*c;
+	t_buf	*tmp;
+	int		is_tmp;
+	size_t	tmp_size;
 
-	next_line = ft_memchr(buf, '\n', len);
-	if (next_line)
+	if ((c = ft_strchr(buf, '\n', size)))
 	{
-		n = next_line - buf;
-		if (n && enqueue(q, buf, n) == -1)
+		is_tmp = 0;
+		if ((tmp = file_q->first) && (tmp->data == buf))
+		{
+			file_q->len -= tmp->size;
+			file_q->first = tmp->next;
+			is_tmp = 1;
+		}
+		if (((tmp_size = c - buf) && (push(file_q, buf, tmp_size) == -1)) ||
+			(set_line(file_q, line) == -1) ||
+			((tmp_size = size - tmp_size - 1) &&
+			(push(file_q, c + 1, tmp_size) == -1)))
 			return (-1);
-		if (set_newline(q, line))
-			return (-1);
-		n = len - n - 1;
-		if (n && enqueue(q, next_line + 1, n))
-			return (-1);
+		if (is_tmp)
+		{
+			free(tmp->data);
+			free(tmp);
+		}
 		return (1);
 	}
-	else if (!(q->front && (buf == q->front->buf)))
-		return (enqueue(q, buf, len));
+	else if ((!file_q->first || (file_q->first->data != buf)) && size)
+		return (push(file_q, buf, size));
 	return (0);
 }
 
-int		get_next_line(int fd, char **line)
+
+int			get_next_line(int fd, char **line)
 {
 	int				ret[2];
 	char			buf[BUFFER_SIZE];
-	static t_queue	*q = NULL;
+	t_buf			*tmp;
+	t_queue			*file_q;
+	static t_queue	qlist = { -1, 0, NULL, NULL, NULL };
 
-	if (fd < 0 || BUFFER_SIZE <= 0 || !line)
+	if (!line ||
+		BUFFER_SIZE <= 0 ||
+		(!(file_q = get_file_q(&qlist, fd)) &&
+		!(file_q = set_file_q(&qlist, fd))))
 		return (-1);
-	if (!q && !(q = qset(q)))
+	if ((tmp = file_q->first) &&
+		(ret[0] = get_line(file_q, tmp->data, tmp->size, line)))
+		return (ret[0]);
+	while ((ret[1] = read(fd, buf, BUFFER_SIZE)) > 0)
+		if ((ret[0] = get_line(file_q, buf, ret[1], line)))
+			return (ret[0]);
+	if ((ret[1] == -1) ||
+		(file_q->first && (set_line(file_q, line) == -1)))
 		return (-1);
-	if (q && q->front &&
-		(ret[1] = get_newline(q, q->front->buf, q->front->len, line)))
-		return (ret[1]);
-	while ((ret[0] = read(fd, buf, BUFFER_SIZE)) > 0)
-		if ((ret[1] = get_newline(q, buf, ret[0], line)))
-			return (ret[1]);
-	if (set_newline(q, line))
-		return (-1);
-	free(q);
-	return (ret[0]);
+	file_q->fd = -1;
+	pop(&qlist);
+	return (0);
 }

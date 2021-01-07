@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/12/14 22:49:05 by flohrel           #+#    #+#             */
-/*   Updated: 2020/12/17 03:03:17 by flohrel          ###   ########.fr       */
+/*   Created: 2020/11/02 10:18:14 by flohrel           #+#    #+#             */
+/*   Updated: 2021/01/07 15:32:24 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,25 +20,29 @@
 # define BUFFER_SIZE 1
 # endif
 
-typedef struct	s_list
-{
-	size_t			len;
-	char			*buf;
-	struct s_list	*next;
-}				t_list;
-
-typedef struct	s_queue
+typedef struct	s_buf	t_buf;
+struct s_buf
 {
 	size_t	size;
-	t_list	*front;
-	t_list	*back;
-}				t_queue;
+	char	*data;
+	t_buf	*next;
+};
 
-int			get_next_line(int fd, char **line);
-char		*ft_memchr(char *s, int c, size_t len);
-char		*ft_memcpy(char *dest, char *src, size_t n);
-t_list		*ft_lstnew(char *buf, size_t len);
-t_list		*qpush(t_queue *q, char *buf, size_t len);
-void		qpop(t_queue *q);
+typedef struct	s_queue	t_queue;
+struct s_queue
+{
+	int		fd;
+	size_t	len;
+	t_buf	*first;
+	t_buf	*last;
+	t_queue	*next;
+};
+
+int		get_next_line(int fd, char **line);
+char	*ft_strchr(char *str, int c, size_t size);
+char	*ft_memcpy(char *dst, char *src, size_t size);
+t_queue	*get_file_q(t_queue *qlist, int fd);
+t_queue	*set_file_q(t_queue *qlist, int fd);
+t_queue	*init_file_q(int fd);
 
 #endif

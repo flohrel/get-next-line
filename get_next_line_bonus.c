@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2020/12/14 23:21:10 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/07 14:55:43 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,8 +119,10 @@ int			get_next_line(int fd, char **line)
 	t_queue			*file_q;
 	static t_queue	qlist = { -1, 0, NULL, NULL, NULL };
 
-	if (!(file_q = get_file_q(&qlist, fd)) &&
-		!(file_q = set_file_q(&qlist, fd)))
+	if (!line ||
+		BUFFER_SIZE <= 0 ||
+		(!(file_q = get_file_q(&qlist, fd)) &&
+		!(file_q = set_file_q(&qlist, fd))))
 		return (-1);
 	if ((tmp = file_q->first) &&
 		(ret[0] = get_line(file_q, tmp->data, tmp->size, line)))

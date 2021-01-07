@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.h                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.h                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:18:14 by flohrel           #+#    #+#             */
-/*   Updated: 2020/12/01 21:17:40 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/07 15:32:34 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ struct s_queue
 	t_queue	*next;
 };
 
+int		get_next_line(int fd, char **line);
 char	*ft_strchr(char *str, int c, size_t size);
 char	*ft_memcpy(char *dst, char *src, size_t size);
 t_queue	*get_file_q(t_queue *qlist, int fd);

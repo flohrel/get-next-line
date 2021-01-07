@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line_utils.c                              :+:      :+:    :+:   */
+/*   get_next_line_utils_bonus.c                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:18:57 by flohrel           #+#    #+#             */
-/*   Updated: 2020/11/05 09:48:48 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/07 14:51:19 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,9 +53,14 @@ t_queue	*set_file_q(t_queue *qlist, int fd)
 	t_queue	*file_q;
 
 	file_q = init_file_q(fd);
-	qlist->len++;
-	if (!(qptr = qlist->next))
-		return ((qlist->next = file_q));
+	if (!file_q)
+		return (file_q);
+	qptr = qlist->next;
+	if (!qptr)
+	{
+		qlist->next = file_q;
+		return (file_q);
+	}
 	while (qptr->next && (fd > qptr->next->fd))
 		qptr = qptr->next;
 	file_q->next = qptr->next;

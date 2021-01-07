@@ -5,73 +5,71 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2020/12/14 22:49:04 by flohrel           #+#    #+#             */
-/*   Updated: 2020/12/17 03:30:24 by flohrel          ###   ########.fr       */
+/*   Created: 2020/11/02 10:18:57 by flohrel           #+#    #+#             */
+/*   Updated: 2021/01/07 14:51:38 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-char	*ft_memcpy(char *dest, char *src, size_t n)
+char	*ft_memcpy(char *dst, char *src, size_t size)
 {
 	char *d;
 
-	if (!dest || !src)
-		return (dest);
-	d = dest;
-	while (n--)
+	d = dst;
+	while (size--)
 		*d++ = *src++;
-	return (dest);
+	return (dst);
 }
 
-char	*ft_memchr(char *s, int c, size_t len)
+char	*ft_strchr(char *str, int c, size_t size)
 {
-	if (!s || !len)
-		return (NULL);
-	while (len--)
+	while (size--)
 	{
-		if (*s == c)
-			return (s);
-		s++;
+		if (*str == c)
+			return (str);
+		str++;
 	}
 	return (NULL);
 }
 
-t_list	*ft_lstnew(char *buf, size_t len)
+t_queue	*init_file_q(int fd)
 {
-	t_list	*new;
+	t_queue *new_q;
 
-	new = malloc(sizeof(*new));
-	if (!new)
-		return (new);
-	new->buf = buf;
-	new->len = len;
-	new->next = NULL;
-	return (new);
+	if (!(new_q = malloc(sizeof(t_queue))))
+		return (NULL);
+	new_q->fd = fd;
+	new_q->len = 0;
+	new_q->first = NULL;
+	new_q->last = NULL;
+	new_q->next = NULL;
+	return (new_q);
 }
 
-t_list	*qpush(t_queue *q, char *buf, size_t len)
+t_queue	*set_file_q(t_queue *qlist, int fd)
 {
-	t_list	*new;
+	t_queue	*qptr;
+	t_queue	*file_q;
 
-	new = ft_lstnew(buf, len);
-	if (!new)
-		return (new);
-	if (!(q->front))
-		q->front = new;
-	if (q->back)
-		q->back->next = new;
-	q->back = new;
-	q->size += len;
-	return (new);
+	file_q = init_file_q(fd);
+	if (!(qptr = qlist->next))
+		return ((qlist->next = file_q));
+	while (qptr->next && (fd > qptr->next->fd))
+		qptr = qptr->next;
+	file_q->next = qptr->next;
+	qptr->next = file_q;
+	return (file_q);
 }
 
-void	qpop(t_queue *q)
+t_queue	*get_file_q(t_queue *qlist, int fd)
 {
-	t_list	*lst;
+	t_queue	*file_q;
 
-	lst = q->front;
-	q->front = lst->next;
-	free(lst->buf);
-	free(lst);
+	file_q = qlist;
+	while (file_q->next && (file_q->fd < fd))
+		file_q = file_q->next;
+	if (file_q->fd == fd)
+		return (file_q);
+	return (NULL);
 }
