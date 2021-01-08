@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 13:47:12 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/08 15:05:40 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,8 @@ int			get_next_line(int fd, char **line)
 	if (!file_q && !(file_q = init_file_queue(file_q)))
 		return (-1);
 	tmp = file_q->first;
+
+	// premiere vers
 	if (tmp && (ret[0] = get_line(file_q, tmp->data, tmp->size, line)))
 		return (ret[0]);
 	while ((ret[1] = read(fd, buf, BUFFER_SIZE)) > 0)
@@ -85,4 +87,17 @@ int			get_next_line(int fd, char **line)
 	free(qlist[fd]);
 	qlist[fd] = NULL;
 	return (0);
+
+	// nvelle vers
+	if (tmp)
+		ret = read_tmp();
+	if (ret)
+		return (ret);
+	ret = read_fd();
+	if (!ret)
+	{
+		free(qlist[fd]);
+		qlist[fd] = NULL;
+	}
+	return (ret);
 }
