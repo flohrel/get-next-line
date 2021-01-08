@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 13:47:12 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/08 13:17:56 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ int			get_line(t_queue *file_q, char *buf, size_t size, char **line)
 		if (is_tmp)
 			pop(file_q);
 		if ((set_line(file_q, line) == -1) ||
-			((tmp_size = size - tmp_size - 1) &&
+			((tmp_size = size - tmp_size) &&
 			(push(file_q, c + 1, tmp_size) == -1)))
 			return (-1);
 		return (1);
@@ -71,7 +71,7 @@ int			get_next_line(int fd, char **line)
 	if (!line || fd < 0 || BUFFER_SIZE <= 0)
 		return (-1);
 	file_q = qlist[fd];
-	if (!file_q && !(file_q = init_file_queue(file_q)))
+	if (!file_q || !(file_q = init_file_queue(file_q)))
 		return (-1);
 	tmp = file_q->first;
 	if (tmp && (ret[0] = get_line(file_q, tmp->data, tmp->size, line)))
