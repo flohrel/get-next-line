@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:18:57 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 12:52:30 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/08 18:53:19 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,10 @@
 
 char	*ft_memcpy(char *dst, char *src, size_t size)
 {
-	char *d;
+	char	*d;
 
+	if (!dst || !src)
+		return (dst);
 	d = dst;
 	while (size--)
 		*d++ = *src++;
@@ -24,11 +26,14 @@ char	*ft_memcpy(char *dst, char *src, size_t size)
 
 char	*ft_strchr(char *str, int c, size_t size)
 {
-	while (size--)
+	if (str)
 	{
-		if (*str == c)
-			return (str);
-		str++;
+		while (size--)
+		{
+			if (*str == c)
+				return (str);
+			str++;
+		}
 	}
 	return (NULL);
 }
@@ -53,7 +58,7 @@ int		push(t_queue *file_q, char *buf, size_t size)
 	if (!new_buf)
 		return (-1);
 	new_buf->data = malloc(sizeof(char) * size);
-	if (!(new_buf->data))
+	if (size && !(new_buf->data))
 		return (-1);
 	ft_memcpy(new_buf->data, buf, size);
 	new_buf->size = size;

@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:18:14 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 13:20:25 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/08 17:38:01 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,27 +23,25 @@
 
 # define MAX_FD			2048
 
-typedef struct	s_buf	t_buf;
-struct s_buf
+typedef struct	s_buf
 {
-	size_t	size;
-	char	*data;
-	t_buf	*next;
-};
+	size_t			size;
+	char			*data;
+	struct s_buf	*next;
+}				t_buf;
 
-typedef struct	s_queue	t_queue;
-struct s_queue
+typedef struct	s_queue
 {
 	size_t	len;
 	t_buf	*first;
 	t_buf	*last;
-};
+}				t_queue;
 
-int		get_next_line(int fd, char **line);
-char	*ft_strchr(char *str, int c, size_t size);
-char	*ft_memcpy(char *dst, char *src, size_t size);
-t_queue	*init_file_queue(t_queue *file_q);
-int		push(t_queue *file_q, char *buf, size_t size);
-void	pop(t_queue *file_q);
+int				get_next_line(int fd, char **line);
+char			*ft_strchr(char *str, int c, size_t size);
+char			*ft_memcpy(char *dst, char *src, size_t size);
+t_queue			*init_file_queue(t_queue *file_q);
+int				push(t_queue *file_q, char *buf, size_t size);
+void			pop(t_queue *file_q);
 
 #endif

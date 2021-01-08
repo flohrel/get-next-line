@@ -6,13 +6,13 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 15:05:40 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/08 18:21:50 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-int			set_line(t_queue *file_q, char **line)
+int	set_line(t_queue *file_q, char **line)
 {
 	char	*lptr;
 	t_buf	*cur_buf;
@@ -32,70 +32,79 @@ int			set_line(t_queue *file_q, char **line)
 	return (0);
 }
 
-int			get_line(t_queue *file_q, char *buf, size_t size, char **line)
+int	read_tmp(t_queue *file_q, char **line)
 {
 	char	*c;
-	int		is_tmp;
+	char	*buf;
+	t_buf	*tmp;
+	size_t	size;
 	size_t	tmp_size;
 
-	if ((c = ft_strchr(buf, '\n', size)))
+	tmp = file_q->first;
+	buf = tmp->data;
+	c = ft_strchr(buf, '\n', tmp->size);
+	if (c)
 	{
-		is_tmp = 0;
-		if (file_q->first->data == buf)
-			is_tmp = 1;
-		tmp_size = c - buf;
-		if (push(file_q, buf, tmp_size) == -1)
+		size = c - buf;
+		tmp_size = tmp->size - size - 1;
+		if (push(file_q, buf, size) == -1)
 			return (-1);
-		if (is_tmp)
-			pop(file_q);
-		if ((set_line(file_q, line) == -1) ||
-			((tmp_size = size - tmp_size - 1) &&
-			(push(file_q, c + 1, tmp_size) == -1)))
+		pop(file_q);
+		if (set_line(file_q, line) == -1)
+			return (-1);
+		if (tmp_size && push(file_q, c + 1, tmp_size) == -1)
 			return (-1);
 		return (1);
 	}
-	else if ((!file_q->first || (file_q->first->data != buf)) && size)
-		return (push(file_q, buf, size));
 	return (0);
 }
 
+int	read_fd(t_queue *file_q, int fd, char **line)
+{
+	char	*c;
+	char	buf[BUFFER_SIZE];
+	int		ret;
+	size_t	size;
+	size_t	tmp_size;
 
-int			get_next_line(int fd, char **line)
+	while ((ret = read(fd, buf, BUFFER_SIZE)) > 0)
+	{
+		c = ft_strchr(buf, '\n', ret);
+		if (c)
+		{
+			size = c - buf;
+			tmp_size = ret - size - 1;
+			if ((push(file_q, buf, size) == -1) ||
+				(set_line(file_q, line) == -1) ||
+				(tmp_size && push(file_q, c + 1, tmp_size) == -1))
+				return (-1);
+			return (1);
+		}
+		if (push(file_q, buf, ret) == -1)
+			return (-1);
+	}
+	return (ret);
+}
+
+int	get_next_line(int fd, char **line)
 {
 	static t_queue	*qlist[MAX_FD] = { NULL };
 	t_queue			*file_q;
-	t_buf			*tmp;
-	char			buf[BUFFER_SIZE];
-	int				ret[2];
+	int				ret;
 
 	if (!line || fd < 0 || BUFFER_SIZE <= 0)
 		return (-1);
 	file_q = qlist[fd];
 	if (!file_q && !(file_q = init_file_queue(file_q)))
 		return (-1);
-	tmp = file_q->first;
-
-	// premiere vers
-	if (tmp && (ret[0] = get_line(file_q, tmp->data, tmp->size, line)))
-		return (ret[0]);
-	while ((ret[1] = read(fd, buf, BUFFER_SIZE)) > 0)
-		if ((ret[0] = get_line(file_q, buf, ret[1], line)))
-			return (ret[0]);
-	if ((ret[1] == -1) ||
-		(file_q->first && (set_line(file_q, line) == -1)))
-		return (-1);
-	free(qlist[fd]);
-	qlist[fd] = NULL;
-	return (0);
-
-	// nvelle vers
-	if (tmp)
-		ret = read_tmp();
-	if (ret)
-		return (ret);
-	ret = read_fd();
+	ret = 0;
+	if (file_q->first)
+		ret = read_tmp(file_q, line);
+	if (!ret)
+		ret = read_fd(file_q, fd, line);
 	if (!ret)
 	{
+		set_line(file_q, line);
 		free(qlist[fd]);
 		qlist[fd] = NULL;
 	}
