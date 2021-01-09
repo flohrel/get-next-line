@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/08 18:21:50 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/09 16:59:14 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,18 +41,20 @@ int	read_tmp(t_queue *file_q, char **line)
 	size_t	tmp_size;
 
 	tmp = file_q->first;
-	buf = tmp->data;
-	c = ft_strchr(buf, '\n', tmp->size);
+	buf = malloc(sizeof(char) * tmp->size);
+	if (!buf)
+		return (-1);
+	c = ft_strchr(tmp->data, '\n', tmp->size);
 	if (c)
 	{
-		size = c - buf;
+		size = c - tmp->data;
 		tmp_size = tmp->size - size - 1;
-		if (push(file_q, buf, size) == -1)
+		if (size && push(file_q, tmp->data, size) == -1)
 			return (-1);
+		ft_memcpy(buf, tmp->data, tmp_size);
 		pop(file_q);
-		if (set_line(file_q, line) == -1)
-			return (-1);
-		if (tmp_size && push(file_q, c + 1, tmp_size) == -1)
+		if ((tmp_size && (set_line(file_q, line) == -1)) ||
+			(push(file_q, buf, tmp_size) == -1))
 			return (-1);
 		return (1);
 	}
@@ -74,7 +76,7 @@ int	read_fd(t_queue *file_q, int fd, char **line)
 		{
 			size = c - buf;
 			tmp_size = ret - size - 1;
-			if ((push(file_q, buf, size) == -1) ||
+			if ((size && (push(file_q, buf, size) == -1)) ||
 				(set_line(file_q, line) == -1) ||
 				(tmp_size && push(file_q, c + 1, tmp_size) == -1))
 				return (-1);
@@ -94,9 +96,9 @@ int	get_next_line(int fd, char **line)
 
 	if (!line || fd < 0 || BUFFER_SIZE <= 0)
 		return (-1);
-	file_q = qlist[fd];
-	if (!file_q && !(file_q = init_file_queue(file_q)))
+	if (!qlist[fd] && !(qlist[fd] = init_file_queue(qlist[fd])))
 		return (-1);
+	file_q = qlist[fd];
 	ret = 0;
 	if (file_q->first)
 		ret = read_tmp(file_q, line);
@@ -105,7 +107,7 @@ int	get_next_line(int fd, char **line)
 	if (!ret)
 	{
 		set_line(file_q, line);
-		free(qlist[fd]);
+		free(file_q);
 		qlist[fd] = NULL;
 	}
 	return (ret);
