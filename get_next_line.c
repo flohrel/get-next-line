@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/09 16:59:14 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/10 12:24:20 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ int	set_line(t_queue *file_q, char **line)
 	{
 		ft_memcpy(lptr, cur_buf->data, cur_buf->size);
 		lptr += cur_buf->size;
-		pop(file_q);
+		pop(file_q, 0);
 	}
 	*lptr = '\0';
 	file_q = init_file_queue(file_q);
@@ -35,29 +35,25 @@ int	set_line(t_queue *file_q, char **line)
 int	read_tmp(t_queue *file_q, char **line)
 {
 	char	*c;
-	char	*buf;
 	t_buf	*tmp;
 	size_t	size;
 	size_t	tmp_size;
 
-	tmp = file_q->first;
-	buf = malloc(sizeof(char) * tmp->size);
-	if (!buf)
-		return (-1);
+	tmp = file_q->tmp;
 	c = ft_strchr(tmp->data, '\n', tmp->size);
 	if (c)
 	{
 		size = c - tmp->data;
 		tmp_size = tmp->size - size - 1;
-		if (size && push(file_q, tmp->data, size) == -1)
+		if (size && push(file_q, tmp->data, size, 0) == -1)
 			return (-1);
-		ft_memcpy(buf, tmp->data, tmp_size);
-		pop(file_q);
-		if ((tmp_size && (set_line(file_q, line) == -1)) ||
-			(push(file_q, buf, tmp_size) == -1))
+		if ((set_line(file_q, line) == -1) ||
+			(tmp_size && push(file_q, c + 1, tmp_size, 1) == -1))
 			return (-1);
+		pop(file_q, 1);
 		return (1);
 	}
+	file_q->tmp = NULL;
 	return (0);
 }
 
@@ -76,13 +72,13 @@ int	read_fd(t_queue *file_q, int fd, char **line)
 		{
 			size = c - buf;
 			tmp_size = ret - size - 1;
-			if ((size && (push(file_q, buf, size) == -1)) ||
+			if ((size && (push(file_q, buf, size, 0) == -1)) ||
 				(set_line(file_q, line) == -1) ||
-				(tmp_size && push(file_q, c + 1, tmp_size) == -1))
+				(tmp_size && push(file_q, c + 1, tmp_size, 1) == -1))
 				return (-1);
 			return (1);
 		}
-		if (push(file_q, buf, ret) == -1)
+		if (push(file_q, buf, ret, 0) == -1)
 			return (-1);
 	}
 	return (ret);
@@ -100,7 +96,7 @@ int	get_next_line(int fd, char **line)
 		return (-1);
 	file_q = qlist[fd];
 	ret = 0;
-	if (file_q->first)
+	if (file_q->tmp)
 		ret = read_tmp(file_q, line);
 	if (!ret)
 		ret = read_fd(file_q, fd, line);
