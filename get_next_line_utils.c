@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:18:57 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/10 12:39:43 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/11 20:07:41 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,18 +82,18 @@ void	pop(t_queue *file_q, t_bool is_tmp)
 {
 	t_buf	*cur_buf;
 
-	if (is_tmp == FALSE)
+	if (is_tmp == TRUE)
+	{
+		cur_buf = file_q->tmp;
+		file_q->tmp = cur_buf->next;
+	}
+	else
 	{
 		cur_buf = file_q->first;
 		file_q->len -= cur_buf->size;
 		file_q->first = cur_buf->next;
 		if (file_q->last == cur_buf)
 			file_q->last = NULL;
-	}
-	else
-	{
-		cur_buf = file_q->tmp;
-		file_q->tmp = cur_buf->next;
 	}
 	free(cur_buf->data);
 	free(cur_buf);

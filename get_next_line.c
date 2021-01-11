@@ -6,7 +6,7 @@
 /*   By: flohrel <flohrel@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/11/02 10:17:42 by flohrel           #+#    #+#             */
-/*   Updated: 2021/01/10 12:24:20 by flohrel          ###   ########.fr       */
+/*   Updated: 2021/01/11 20:19:16 by flohrel          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,20 +41,23 @@ int	read_tmp(t_queue *file_q, char **line)
 
 	tmp = file_q->tmp;
 	c = ft_strchr(tmp->data, '\n', tmp->size);
-	if (c)
+	if (!c)
 	{
-		size = c - tmp->data;
-		tmp_size = tmp->size - size - 1;
-		if (size && push(file_q, tmp->data, size, 0) == -1)
-			return (-1);
-		if ((set_line(file_q, line) == -1) ||
-			(tmp_size && push(file_q, c + 1, tmp_size, 1) == -1))
+		if (push(file_q, tmp->data, tmp->size, 0) == -1)
 			return (-1);
 		pop(file_q, 1);
-		return (1);
+		return (0);
 	}
-	file_q->tmp = NULL;
-	return (0);
+	size = c - tmp->data;
+	tmp_size = tmp->size - size - 1;
+	if (size && push(file_q, tmp->data, size, 0) == -1)
+		return (-1);
+	if ((set_line(file_q, line) == -1) ||
+		(tmp_size && push(file_q, c + 1, tmp_size, 1) == -1))
+		return (-1);
+	free(tmp->data);
+	free(tmp);
+	return (1);
 }
 
 int	read_fd(t_queue *file_q, int fd, char **line)
